@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player - Card Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        #game-state {
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Player - Card Game</h1>
+    <input type="text" id="host-id" placeholder="Enter Host ID">
+    <button id="connect">Connect to Host</button>
+    <div id="game-state"></div>
+    <div id="player-hand"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.3.1/dist/peerjs.min.js"></script>
+    <script>
+        const peer = new Peer();  // Create a PeerJS instance for the player
+        let connection;
+        let playerHand = [];
+
+        // Connect to the host when the player enters the host ID
+        document.getElementById('connect').addEventListener('click', () => {
+            const hostId = document.getElementById('host-id').value;
+            connection = peer.connect(hostId);
+
+            connection.on('open', () => {
+                console.log('Connected to host');
+            });
+
+            connection.on('data', data => {
+                if (data.type === 'updateState') {
+                    // Update game state and display it
+                    const state = data.state;
+                    document.getElementById('game-state').textContent = JSON.stringify(state, null, 2);
+
+                    // Display player's hand
+                    const player = state.players.find(p => p.id === peer.id);
+                    playerHand = player.hand;
+                    document.getElementById('player-hand').textContent = `Your Hand: ${playerHand.join(', ')}`;
+                }
+            });
+        });
+
+        // Send card play to the host
+        function playCard(cardIndex) {
+            connection.send({ type: 'playCard', cardIndex });
+        }
+    </script>
+</body>
+</html>
