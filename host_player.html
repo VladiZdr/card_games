@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Host</title>
+</head>
+<body>
+    <h1>Host Page</h1>
+    <p>Welcome, Player 1 (Host). You can see the connected players here:</p>
+    <div id="players"></div>
+    <button onclick="startGame()">Start Game</button>
+
+    <script>
+        // Register the host with the server
+        fetch('/register_host', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ip: location.hostname })
+        })
+        .then(response => response.text())
+        .then(data => console.log(data))
+        .catch(err => console.error("Error registering host:", err));
+
+        // Periodically fetch the list of players
+        setInterval(() => {
+            fetch('/players')
+                .then(response => response.json())
+                .then(players => {
+                    const playersDiv = document.getElementById("players");
+                    playersDiv.innerHTML = `<ul>${players.map(player => `<li>Player ${player.id}</li>`).join('')}</ul>`;
+                })
+                .catch(err => console.error("Error fetching players:", err));
+        }, 2000);
+
+        // Start the game (placeholder function)
+        function startGame() {
+            alert("Game starting... (not yet implemented)");
+        }
+    </script>
+</body>
+</html>

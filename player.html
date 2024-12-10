@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player</title>
+</head>
+<body>
+    <h1>Player Page</h1>
+    <p>Waiting for the game to start. Current players:</p>
+    <div id="players"></div>
+
+    <script>
+        let playerId;
+
+        // Register the player with the server
+        fetch('/register_player', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ip: location.hostname })
+        })
+        .then(response => response.json())
+        .then(data => {
+            playerId = data.id;
+            console.log(`Registered as Player ${playerId}`);
+        })
+        .catch(err => console.error("Error registering player:", err));
+
+        // Periodically fetch the list of players
+        setInterval(() => {
+            fetch('/players')
+                .then(response => response.json())
+                .then(players => {
+                    const playersDiv = document.getElementById("players");
+                    playersDiv.innerHTML = `<ul>${players.map(player => `<li>Player ${player.id}</li>`).join('')}</ul>`;
+                })
+                .catch(err => console.error("Error fetching players:", err));
+        }, 2000);
+    </script>
+</body>
+</html>
