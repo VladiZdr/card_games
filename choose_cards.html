@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choose Cards</title>
+</head>
+<body>
+    <h1>Choose Cards</h1>
+    <p>Select cards for the game:</p>
+    <div id="deck"></div>
+    <button onclick="submitCards()">Submit Cards</button>
+
+    <script>
+        const deck = [
+            "Ace of Spades", "2 of Spades", "3 of Spades", // Add all cards here
+            "King of Hearts", "Queen of Hearts", "Jack of Hearts"
+        ];
+        const selectedCards = [];
+
+        // Display the deck as a list of checkboxes
+        const deckDiv = document.getElementById("deck");
+        deckDiv.innerHTML = deck.map(card => `
+            <div>
+                <input type="checkbox" id="${card}" value="${card}" onchange="toggleCard('${card}')">
+                <label for="${card}">${card}</label>
+            </div>
+        `).join('');
+
+        function toggleCard(card) {
+            if (selectedCards.includes(card)) {
+                selectedCards.splice(selectedCards.indexOf(card), 1);
+            } else {
+                selectedCards.push(card);
+            }
+        }
+
+        function submitCards() {
+            fetch('/submit_cards', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cards: selectedCards })
+            })
+            .then(response => response.text())
+            .then(data => {
+                window.location.href = '/host_player.html'; // Redirect back to the host page
+            })
+            .catch(err => console.error("Error submitting cards:", err));
+        }
+    </script>
+</body>
+</html>
+

@@ -9,7 +9,13 @@
     <h1>Host Page</h1>
     <p>Welcome, Player 1 (Host). You can see the connected players here:</p>
     <div id="players"></div>
+    <p>Selected Cards:</p>
+    <div id="selectedCards"></div>
+
+    <button onclick="selectGame('belot')">Belot</button>
+    <button onclick="selectGame('texas_holdem')">Texas Holdem</button>
     <button onclick="startGame()">Start Game</button>
+    <button onclick="window.location.href='/choose_cards.html'">Choose Cards</button>
 
     <script>
         // Register the host with the server
@@ -33,9 +39,35 @@
                 .catch(err => console.error("Error fetching players:", err));
         }, 2000);
 
-        // Start the game (placeholder function)
+        // Fetch and display the selected cards
+        setInterval(() => {
+            fetch('/get_selected_cards')
+                .then(response => response.json())
+                .then(cards => {
+                    const selectedCardsDiv = document.getElementById("selectedCards");
+                    selectedCardsDiv.innerHTML = `<ul>${cards.map(card => `<li>${card}</li>`).join('')}</ul>`;
+                })
+                .catch(err => console.error("Error fetching selected cards:", err));
+        }, 2000);
+
+        // Select a game type
+        function selectGame(gameType) {
+            fetch('/select_game', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ game: gameType })
+            })
+            .then(response => response.text())
+            .then(data => alert(data))
+            .catch(err => console.error("Error selecting game:", err));
+        }
+
+        // Start the game
         function startGame() {
-            alert("Game starting... (not yet implemented)");
+            fetch('/start_game', { method: 'POST' })
+                .then(response => response.text())
+                .then(data => alert(data))
+                .catch(err => console.error("Error starting game:", err));
         }
     </script>
 </body>

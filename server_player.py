@@ -1,34 +1,32 @@
 from http.server import HTTPServer, SimpleHTTPRequestHandler
+import os
 import json
 
-# Global data
-players = []  # List of connected players
-host = None  # Host information
-next_player_id = 2  # Unique ID starts at 2 (Player 1 is reserved for the host)
+#directory = os.path.expanduser("~/Documents/Card_game")
+#os.chdir(directory)
+
+players = []
+host = None
+next_player_id = 2
+game_type = None
+selected_cards = []
 
 
 class GameServerHandler(SimpleHTTPRequestHandler):
     def do_POST(self):
-        global players, host, next_player_id
+        global players, host, next_player_id, game_type, selected_cards
 
         if self.path == "/register_host":
-            # Register the host
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length).decode()
             host_data = json.loads(post_data)
 
-            host_data["id"] = 1  # Host is always Player 1
+            host_data["id"] = 1
             host = host_data
-            players = [host]  # Reset the players list with the host
-            print(f"Host registered: {host}")
-            
-            # Respond to the host
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b"Host registered successfully.")
+            players = [host]
+            self.respond("Host registered successfully.")
 
         elif self.path == "/register_player":
-            # Register a new player
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length).decode()
             player_data = json.loads(post_data)
@@ -36,27 +34,49 @@ class GameServerHandler(SimpleHTTPRequestHandler):
             player_data["id"] = next_player_id
             next_player_id += 1
             players.append(player_data)
-            print(f"Player registered: {player_data}")
+            self.respond(json.dumps({"id": player_data["id"]}))
 
-            # Respond to the player with their ID
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(json.dumps({"id": player_data["id"]}).encode())
+        elif self.path == "/select_game":
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length).decode()
+            game_data = json.loads(post_data)
+
+            game_type = game_data["game"]
+            self.respond(f"Game selected: {game_type}")
+
+        elif self.path == "/submit_cards":
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length).decode()
+            card_data = json.loads(post_data)
+
+            selected_cards = card_data["cards"]
+            self.respond(f"Cards selected: {', '.join(selected_cards)}")
+
+        elif self.path == "/start_game":
+            if not selected_cards:
+                self.respond("No cards selected. Cannot start the game.")
+            else:
+                # Example: Distribute one card to each player
+                for i, player in enumerate(players):
+                    player["card"] = selected_cards[i % len(selected_cards)]
+                self.respond("Game started! Cards distributed.")
 
     def do_GET(self):
         if self.path == "/players":
-            # Serve the list of players to the host or players
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps(players).encode())
+            self.respond(json.dumps(players), content_type="application/json")
+        elif self.path == "/get_selected_cards":
+            self.respond(json.dumps(selected_cards), content_type="application/json")
         else:
-            # Serve static files (host.html and player.html)
             super().do_GET()
 
+    def respond(self, message, content_type="text/plain"):
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.end_headers()
+        self.wfile.write(message.encode())
 
-# Start the server
+
 HOST, PORT = "0.0.0.0", 8000
-print(f"Starting server on {HOST}:{PORT}")
 server = HTTPServer((HOST, PORT), GameServerHandler)
+print(f"Serving on http://{HOST}:{PORT}")
 server.serve_forever()
