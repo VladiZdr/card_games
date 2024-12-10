@@ -6,29 +6,36 @@
     <title>Game</title>
 </head>
 <body>
-    <h1>Game Started</h1>
-    <p>Your Card:</p>
-    <div id="card"></div>
-    <button onclick="endGame()">End Game</button>
+    <h1>Game Page</h1>
+    <p id="cardInfo"></p>
+
+    <!-- Host-only: End Game Button -->
+    <div id="endGameContainer" style="display: none;">
+        <button onclick="endGame()">End Game</button>
+    </div>
 
     <script>
-        // Fetch the player's dealt card
-        fetch('/get_card')
+        // Fetch and display the dealt card
+        fetch('/get_dealt_card')
             .then(response => response.json())
             .then(data => {
-                const cardDiv = document.getElementById("card");
-                cardDiv.textContent = data.card || "No card dealt.";
+                document.getElementById("cardInfo").innerText = `Your card: ${data.card}`;
+                // If this is the host, show the "End Game" button
+                if (data.isHost) {
+                    document.getElementById("endGameContainer").style.display = 'block';
+                }
             })
-            .catch(err => console.error("Error fetching card:", err));
+            .catch(err => console.error("Error fetching dealt card:", err));
 
-        // End the game and return to the main page
+        // End Game Function
         function endGame() {
             fetch('/end_game', { method: 'POST' })
                 .then(() => {
-                    window.location.href = data.redirect; // Redirect to the respective page
+                    window.location.href = '/host_player.html'; // Redirect host back
                 })
                 .catch(err => console.error("Error ending game:", err));
         }
     </script>
 </body>
 </html>
+

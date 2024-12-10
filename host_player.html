@@ -28,47 +28,24 @@
         .then(data => console.log(data))
         .catch(err => console.error("Error registering host:", err));
 
-        // Periodically fetch the list of players
-        setInterval(() => {
-            fetch('/players')
-                .then(response => response.json())
-                .then(players => {
-                    const playersDiv = document.getElementById("players");
-                    playersDiv.innerHTML = `<ul>${players.map(player => `<li>Player ${player.id}</li>`).join('')}</ul>`;
-                })
-                .catch(err => console.error("Error fetching players:", err));
-        }, 2000);
+        // fetch the list of players
+        fetch('/players')
+            .then(response => response.json())
+            .then(players => {
+                const playersDiv = document.getElementById("players");
+                playersDiv.innerHTML = `<ul>${players.map(player => `<li>Player ${player.id}</li>`).join('')}</ul>`;
+            })
+            .catch(err => console.error("Error fetching players:", err));
 
         // Fetch and display the selected cards
-        setInterval(() => {
-            fetch('/get_selected_cards')
-                .then(response => response.json())
-                .then(cards => {
-                    const selectedCardsDiv = document.getElementById("selectedCards");
-                    selectedCardsDiv.innerHTML = `<ul>${cards.map(card => `<li>${card}</li>`).join('')}</ul>`;
-                })
-                .catch(err => console.error("Error fetching selected cards:", err));
-        }, 2000);
-
-        // Select a game type
-        function selectGame(gameType) {
-            fetch('/select_game', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ game: gameType })
+        fetch('/get_selected_cards')
+            .then(response => response.json())
+            .then(cards => {
+                const selectedCardsDiv = document.getElementById("selectedCards");
+                selectedCardsDiv.innerHTML = `<ul>${cards.map(card => `<li>${card}</li>`).join('')}</ul>`;
             })
-            .then(response => response.text())
-            .then(data => alert(data))
-            .catch(err => console.error("Error selecting game:", err));
-        }
+            .catch(err => console.error("Error fetching selected cards:", err));
 
-        // Start the game
-        function startGame() {
-            fetch('/start_game', { method: 'POST' })
-                .then(response => response.text())
-                .then(data => alert(data))
-                .catch(err => console.error("Error starting game:", err));
-        }
     </script>
 </body>
 </html>
