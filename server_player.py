@@ -2,20 +2,23 @@ import random
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import os
 import json
+from threading import Lock
 
+game_lock = Lock()
 players = []
 host = None
 next_player_id = 2
 game_type = None
 selected_cards = []
-dealt_cards = {}
+game_on = False
+left_cards = []
 
-#directory = os.path.expanduser("~/path/to/html/files")
+#directory = os.path.expanduser("~/Documents/Card_game")
 #os.chdir(directory)
 
 class GameServerHandler(SimpleHTTPRequestHandler):
     def do_POST(self):
-        global players, host, next_player_id, game_type, selected_cards, dealt_cards
+        global players, host, next_player_id, game_type, selected_cards, game_on
 
         if self.path == "/register_host" and not players:
             content_length = int(self.headers['Content-Length'])
@@ -46,32 +49,44 @@ class GameServerHandler(SimpleHTTPRequestHandler):
             print(f"Selected cards updated: {selected_cards}")  # Debugging log
             self.respond("Cards submitted successfully.")
 
-
         elif self.path == "/start_game":
-            if not selected_cards:
-                self.respond("No cards selected. Cannot start the game.")
-            else:
-                # Distribute one random card to each player
-                dealt_cards = {player["id"]: random.choice(selected_cards) for player in players}
-                self.respond("Game started! Redirecting players...")
-
+            with game_lock:
+                game_on = True  # Update game_on safely
+                left_cards = selected_cards
+            self.respond("Game started!")
+                
+        
         elif self.path == "/end_game":
-            dealt_cards.clear()
+            with game_lock:
+                game_on = False
+                left_cards.clear() 
             self.respond("Game ended. Redirecting players...")
 
-    def do_GET(self):
-        global dealt_cards
+    def do_GET(self): 
 
-        if self.path.startswith("/get_dealt_card"):
-            # Extract player ID from query parameter
-            player_id = int(self.path.split("?id=")[-1])
-            card = dealt_cards.get(player_id, "No card assigned")
-            self.respond(json.dumps({"card": card}), content_type="application/json")
-        elif self.path == "/players":
+        if self.path == "/players":
             self.respond(json.dumps(players), content_type="application/json")
         elif self.path == "/get_selected_cards":
-            # Send the selected cards as a JSON response
             self.respond(json.dumps(selected_cards), content_type="application/json")
+
+        elif self.path.startswith("/game_on"):
+            with game_lock:
+                try:
+                    self.respond(json.dumps(game_on), content_type="application/json")
+                except Exception as e:
+                    self.send_response(500)
+                    self.end_headers()
+                    self.wfile.write(f"Error checking game status: {str(e)}".encode())
+
+        elif self.path.startswith("/game_off"):
+            with game_lock:
+                try:
+                    self.respond(json.dumps(game_on), content_type="application/json")
+                except Exception as e:
+                    self.send_response(500)
+                    self.end_headers()
+                    self.wfile.write(f"Error checking game status: {str(e)}".encode())
+
         else:
             super().do_GET()
 

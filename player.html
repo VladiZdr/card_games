@@ -26,7 +26,7 @@
         })
         .catch(err => console.error("Error registering player:", err));
 
-        // Periodically fetch the list of players
+        //fetch the list of players
         fetch('/players')
             .then(response => response.json())
             .then(players => {
@@ -37,15 +37,15 @@
 
         //Automatically redirect players to their respective pages when the game starts:
         setInterval(() => {
-            fetch('/check_redirect?id=' + playerId)
+            fetch('/game_on')
                 .then(response => response.json())
-                .then(data => {
-                    if (data.redirect) {
-                        window.location.href = `/game.html?id=${playerId}`;
+                .then(game_on => {
+                    if (game_on) {
+                        window.location.href = '/game.html';
                     }
                 })
                 .catch(err => console.error("Error checking redirect:", err));
-        }, 2000);
+        }, 5000);
 
     </script>
 </body>

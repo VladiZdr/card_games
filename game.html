@@ -6,36 +6,45 @@
     <title>Game</title>
 </head>
 <body>
-    <h1>Game Page</h1>
-    <p id="cardInfo"></p>
-
-    <!-- Host-only: End Game Button -->
-    <div id="endGameContainer" style="display: none;">
-        <button onclick="endGame()">End Game</button>
-    </div>
+    <h1>Your Card</h1>
+    <div id="card"></div>
+    <button onclick="endGame()">End Game</button>
 
     <script>
-        // Fetch and display the dealt card
-        fetch('/get_dealt_card')
+        // Replace with the actual player ID (use a session variable or query parameter)
+        const playerId = localStorage.getItem('playerId');
+
+        // Fetch the dealt card from the server
+        fetch(`/get_dealt_card?id=${playerId}`)
             .then(response => response.json())
             .then(data => {
-                document.getElementById("cardInfo").innerText = `Your card: ${data.card}`;
-                // If this is the host, show the "End Game" button
-                if (data.isHost) {
-                    document.getElementById("endGameContainer").style.display = 'block';
+                if (data.card) {
+                    document.getElementById('card').innerText = `Your card: ${data.card}`;
+                } else {
+                    document.getElementById('card').innerText = "No card dealt.";
                 }
             })
             .catch(err => console.error("Error fetching dealt card:", err));
-
-        // End Game Function
-        function endGame() {
-            fetch('/end_game', { method: 'POST' })
-                .then(() => {
-                    window.location.href = '/host_player.html'; // Redirect host back
+        
+        function endGame(){
+            fetch('/end_game', {method: 'POST'})
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Server response:", data);  // Debugging log
+                    window.location.href = '/host_player.html'; // Redirect back to the host page
                 })
-                .catch(err => console.error("Error ending game:", err));
+                .catch(err => console.error("Error ending the game:", err));
         }
+        setInterval(() => {
+            fetch('/game_off')
+                .then(response => response.json())
+                .then(game_on => {
+                    if (!game_on) {
+                        window.location.href = '/player.html';
+                    }
+                })
+                .catch(err => console.error("Error checking redirect:", err));
+        }, 10000);
     </script>
 </body>
 </html>
-
