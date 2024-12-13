@@ -58,12 +58,16 @@ class GameServerHandler(SimpleHTTPRequestHandler):
             self.respond("Cards submitted successfully.")
 
         elif self.path == "/start_game":
-            with game_lock:
-                game_on = True  # Update game_on safely
-                left_cards = selected_cards
-            self.respond("Game started!")
-                
+            if len(selected_cards) >= len(players):
+                with game_lock:
+                    game_on = True  # Update game_on safely
+                    left_cards = selected_cards
+                self.respond(json.dumps({"game_on": True}), content_type="application/json")
+            else:
+                # Respond with a clear message if the condition is not met
+                self.respond(json.dumps({"game_on": False, "message": "Not enough cards selected for all players."}), content_type="application/json")
         
+                    
         elif self.path == "/end_game":
             with game_lock:
                 game_on = False

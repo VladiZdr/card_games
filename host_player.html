@@ -46,15 +46,19 @@
             })
             .catch(err => console.error("Error fetching selected cards:", err));
 
-        function startGame() {
-            fetch('/start_game', { method: 'POST' })
-                .then(response => response.text())
-                .then(data => {
-                    console.log(data);  // Debugging log
-                    window.location.href = '/game.html';  // Redirect to game page
-                })
-                .catch(err => console.error("Error starting the game:", err));
-        }
+            function startGame() {
+                fetch('/start_game', { method: 'POST' })
+                    .then(response => response.json())  // Parse JSON response
+                    .then(data => {
+                        if (data.game_on) {
+                            window.location.href = '/game.html';
+                        } else {
+                            alert(data.message || "Game cannot start. Check selected cards or players.");
+                        }
+                    })
+                    .catch(err => console.error("Error starting the game:", err));
+            }
+
 
     </script>
 </body>
