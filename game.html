@@ -27,11 +27,11 @@
             .catch(err => console.error("Error fetching dealt card:", err));
         
         function endGame(){
+            window.location.href = '/host_player.html' // Redirect back to the host page
             fetch('/end_game', {method: 'POST'})
                 .then(response => response.json())
                 .then(data => {
                     console.log("Server response:", data);  // Debugging log
-                    window.location.href = '/host_player.html'; // Redirect back to the host page
                 })
                 .catch(err => console.error("Error ending the game:", err));
         }
@@ -44,7 +44,7 @@
                     }
                 })
                 .catch(err => console.error("Error checking redirect:", err));
-        }, 10000);
+        }, 2000);
     </script>
 </body>
 </html>

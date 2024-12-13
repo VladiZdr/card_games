@@ -35,6 +35,9 @@ class GameServerHandler(SimpleHTTPRequestHandler):
             post_data = self.rfile.read(content_length).decode()
             player_data = json.loads(post_data)
 
+            # Extract the IP address from the incoming request
+            ip_address = player_data.get("ip")
+
             player_data["id"] = next_player_id
             next_player_id += 1
             players.append(player_data)
@@ -59,7 +62,7 @@ class GameServerHandler(SimpleHTTPRequestHandler):
         elif self.path == "/end_game":
             with game_lock:
                 game_on = False
-                left_cards.clear() 
+                #left_cards.clear() 
             self.respond("Game ended. Redirecting players...")
 
     def do_GET(self): 
