@@ -11,17 +11,18 @@
     <button onclick="endGame()">End Game</button>
 
     <script>
+        
         // Replace with the actual player ID (use a session variable or query parameter)
         const playerId = localStorage.getItem('playerId');
 
         // Fetch the dealt card from the server
-        fetch(`/get_dealt_card?id=${playerId}`)
+        fetch('/get_dealt_card')
             .then(response => response.json())
             .then(data => {
                 if (data.card) {
                     document.getElementById('card').innerText = `Your card: ${data.card}`;
-                } else {
-                    document.getElementById('card').innerText = "No card dealt.";
+                } else if (data.error) {
+                    document.getElementById('card').innerText = data.error;
                 }
             })
             .catch(err => console.error("Error fetching dealt card:", err));

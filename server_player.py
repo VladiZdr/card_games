@@ -12,13 +12,19 @@ game_type = None
 selected_cards = []
 game_on = False
 left_cards = []
+full_deck = [
+"2 Spades", "3 Spades", "4 Spades", "5 Spades", "6 Spades", "7 Spades", "8 Spades", "9 Spades", "10 Spades", "J  Spades", "D Spades", "K Spades", "A Spades", 
+"2 Hearts", "3 Hearts", "4 Hearts", "5 Hearts", "6 Hearts", "7 Hearts", "8 Hearts", "9 Hearts", "10 Hearts", "J  Hearts", "D Hearts", "K Hearts", "A Hearts", 
+"2 Diamonds", "3 Diamonds", "4 Diamonds", "5 Diamonds", "6 Diamonds", "7 Diamonds", "8 Diamonds", "9 Diamonds", "10 Diamonds", "J  Diamonds", "D Diamonds", "K Diamonds", "A Diamonds", 
+"2 Clubs", "3 Clubs", "4 Clubs", "5 Clubs", "6 Clubs", "7 Clubs", "8 Clubs", "9 Clubs", "10 Clubs", "J  Clubs", "D Clubs", "K Clubs", "A Clubs"
+]
 
 #directory = os.path.expanduser("~/Documents/Card_game")
 #os.chdir(directory)
 
 class GameServerHandler(SimpleHTTPRequestHandler):
     def do_POST(self):
-        global players, host, next_player_id, game_type, selected_cards, game_on
+        global players, host, next_player_id, game_type, selected_cards, game_on, left_cards
 
         if self.path == "/register_host" and not players:
             content_length = int(self.headers['Content-Length'])
@@ -61,7 +67,7 @@ class GameServerHandler(SimpleHTTPRequestHandler):
             if len(selected_cards) >= len(players):
                 with game_lock:
                     game_on = True  # Update game_on safely
-                    left_cards = selected_cards
+                    left_cards = selected_cards.copy()
                 self.respond(json.dumps({"game_on": True}), content_type="application/json")
             else:
                 # Respond with a clear message if the condition is not met
@@ -74,7 +80,8 @@ class GameServerHandler(SimpleHTTPRequestHandler):
             self.respond("Game ended. Redirecting players...")
 
     def do_GET(self): 
-
+        global left_cards
+        
         if self.path == "/players":
             self.respond(json.dumps(players), content_type="application/json")
         elif self.path == "/get_selected_cards":
@@ -88,6 +95,18 @@ class GameServerHandler(SimpleHTTPRequestHandler):
                     self.send_response(500)
                     self.end_headers()
                     self.wfile.write(f"Error checking game status: {str(e)}".encode())
+        
+        elif self.path.startswith("/get_dealt_card"):
+            with game_lock:  # Ensure thread-safety
+                if left_cards:  # Check if there are cards left
+                    # Select a random card and remove it from the list
+                    dealt_card = random.choice(left_cards)
+                    left_cards.remove(dealt_card)
+                    self.respond(json.dumps({"card": dealt_card}), content_type="application/json")
+                else:
+                    # If no cards are left, respond with an error message
+                    self.respond(json.dumps({"error": "No cards left to deal."}), content_type="application/json")
+
 
         elif self.path.startswith("/game_off"):
             with game_lock:
