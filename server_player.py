@@ -9,12 +9,14 @@ from urllib.parse import urlparse, parse_qs
 players = []
 host = None
 next_player_id = 2
+belot_id = 0
 # controll game state
 game_type = None
 game_lock = Lock()
 game_on = False
 belot_on = False
 # cards
+played_cards = []
 selected_cards = []
 player_hands = {}
 left_belot_deck = []
@@ -38,7 +40,7 @@ belot_deck = [
 class GameServerHandler(SimpleHTTPRequestHandler):
     
     def do_POST(self):
-        global players, host, next_player_id, game_type, selected_cards, game_on, belot_on, left_cards
+        global players, host, next_player_id, game_type, selected_cards, game_on, belot_on, left_cards, belot_id
 
         if self.path == "/register_host" and not players:
             content_length = int(self.headers['Content-Length'])
@@ -94,8 +96,40 @@ class GameServerHandler(SimpleHTTPRequestHandler):
             #else:
                 #self.respond(json.dumps({"belot_on": False, "message": "Not enough players."}), content_type="application/json")
 
+        # Play a card
+        elif self.path.startswith("/play_card"):
+            content_length = int(self.headers['Content-Length'])
+            post_data = json.loads(self.rfile.read(content_length))
+            player_id = str(post_data.get("id"))  # Ensure player_id is treated as string
+            card = post_data.get("card")
+
+            with game_lock:
+                # Log for debugging
+                print(f"Received play_card request: player_id={player_id}, card={card}")
+                print(f"Current player_hands: {player_hands}")
+                
+                if player_id not in player_hands:
+                    # Player ID not found in the system
+                    self.respond(json.dumps({"success": False, "error": "Player not found"}))
+                elif card not in player_hands[player_id]:
+                    # Card not in the player's hand
+                    self.respond(json.dumps({"success": False, "error": "Card not in hand"}))
+                else:
+                    # Valid request, process the card
+                    player_hands[player_id].remove(card)
+                    played_cards.append(card)
+                    # Log updated state
+                    print(f"Card played: {card}, updated hand: {player_hands[player_id]}")
+                    print(f"Played cards: {played_cards}")
+                    self.respond(json.dumps({"success": True, "newHand": player_hands[player_id]}))
+
         elif self.path == "/reset_belot":
-            self.respond("Reseting belot hands")
+            with game_lock:
+                played_cards.clear()
+                left_cards = belot_deck.copy()
+                for player in players:
+                    player["hand"] = []
+            self.respond(json.dumps({"success": True}))
                     
         elif self.path == "/end_game":
             with game_lock:
@@ -107,7 +141,7 @@ class GameServerHandler(SimpleHTTPRequestHandler):
             self.respond("Game ended. Redirecting players...")
 
     def do_GET(self): 
-        global left_cards, left_belot_deck, player_hands
+        global left_cards, left_belot_deck, player_hands, played_cards, belot_id
         
         if self.path == "/players":
             self.respond(json.dumps(players), content_type="application/json")
@@ -122,16 +156,6 @@ class GameServerHandler(SimpleHTTPRequestHandler):
                     self.send_response(500)
                     self.end_headers()
                     self.wfile.write(f"Error checking game status: {str(e)}".encode())
-
-        elif self.path.startswith("/belot_on"):
-            with game_lock:
-                try:
-                    self.respond(json.dumps(belot_on), content_type="application/json")
-                except Exception as e:
-                    self.send_response(500)
-                    self.end_headers()
-                    self.wfile.write(f"Error checking game status: {str(e)}".encode())            
-        
         
         elif self.path.startswith("/get_dealt_card"):
             with game_lock:  # Ensure thread-safety
@@ -144,7 +168,23 @@ class GameServerHandler(SimpleHTTPRequestHandler):
                     # If no cards are left, respond with an error message
                     self.respond(json.dumps({"error": "No cards left to deal."}), content_type="application/json")
 
+        elif self.path.startswith("/belot_on"):
+            with game_lock:
+                try:
+                    self.respond(json.dumps(belot_on), content_type="application/json")
+                except Exception as e:
+                    self.send_response(500)
+                    self.end_headers()
+                    self.wfile.write(f"Error checking game status: {str(e)}".encode())            
+        
+        elif self.path.startswith("/get_belot_id"):
+            with game_lock:
+                belot_id += 1
+                self.respond(json.dumps({"id": belot_id}), content_type="application/json")
+
+        # Deal first 5 cards
         elif self.path.startswith("/get_belot_hand1"):
+            played_cards.clear()
             query = parse_qs(urlparse(self.path).query)
             player_id = query.get('id', [None])[0]
             if not player_id:
@@ -185,14 +225,11 @@ class GameServerHandler(SimpleHTTPRequestHandler):
 
             self.respond(json.dumps({"hand": player_hands[player_id]}), content_type="application/json")
 
-        # Endpoint to reset the deck and clear player hands
-        elif self.path == "/reset_belot":
-            left_belot_deck = belot_deck.copy()
-            random.shuffle(left_belot_deck)
-            player_hands.clear()
-            self.respond(json.dumps({"message": "Belot deck reset"}), content_type="application/json")
+        # Get played cards
+        elif self.path == "/get_played_cards":
+            self.respond(json.dumps({"playedCards": played_cards}))
 
-
+        # End games -> go back to menus
         elif self.path.startswith("/game_off"):
             with game_lock:
                 try:

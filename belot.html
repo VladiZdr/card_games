@@ -4,18 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Belot</title>
+    <style>
+        .card {
+            display: inline-block;
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid black;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .selected {
+            background-color: yellow;
+        }
+    </style>
 </head>
 <body>
     <h1>Your Hand</h1>
     <div id="hand"></div>
+    <button id="play-card" onclick="playCard()" disabled>Play</button>
     <button id="get-more-cards" onclick="getMoreCards()">Get 3 More Cards</button>
     <button id="new-hand" onclick="newHand()">New Hand</button>
     <button onclick="endGame()">End Game</button>
 
+    <h2>Played Cards</h2>
+    <div id="played-cards"></div>
+
     <script>
-        const playerId = localStorage.getItem('playerId');
+        let playerId = 1;
+        
         const handDiv = document.getElementById('hand');
-        const getMoreButton = document.getElementById('get-more-cards');
+        const playButton = document.getElementById('play-card');
+        const playedCardsDiv = document.getElementById('played-cards');
+        let selectedCard = null;
+
+        fetch('/get_belot_id')
+            .then(response => response.json())
+            .then(data => {
+                playerId = data.id;
+                console.log("Player ID:", playerId);
+            })
+            .catch(err => console.error("Error fetching belot_id:", err));
 
         // Fetch the initial 5-card hand
         function fetchInitialHand() {
@@ -23,7 +51,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.hand) {
-                        handDiv.innerText = `Your hand: ${data.hand.join(", ")}`;
+                        renderHand(data.hand);
                     } else if (data.error) {
                         handDiv.innerText = data.error;
                     }
@@ -37,8 +65,8 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.hand) {
-                        handDiv.innerText = `Your hand: ${data.hand.join(", ")}`;
-                        getMoreButton.disabled = true; // Disable button after fetching 3 cards
+                        renderHand(data.hand);
+                        document.getElementById('get-more-cards').disabled = true;
                     } else if (data.error) {
                         handDiv.innerText = data.error;
                     }
@@ -46,35 +74,86 @@
                 .catch(err => console.error("Error fetching additional cards:", err));
         }
 
+        // Render the player's hand as selectable cards
+        function renderHand(cards) {
+            handDiv.innerHTML = '';
+            cards.forEach(card => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'card';
+                cardDiv.innerText = card;
+                cardDiv.onclick = () => selectCard(cardDiv, card);
+                handDiv.appendChild(cardDiv);
+            });
+            selectedCard = null;
+            playButton.disabled = true;
+        }
+
+        // Select a card from the hand
+        function selectCard(cardElement, card) {
+            // Deselect all cards
+            document.querySelectorAll('.card').forEach(el => el.classList.remove('selected'));
+            // Select the clicked card
+            cardElement.classList.add('selected');
+            selectedCard = card;
+            playButton.disabled = false;
+        }
+
+        // Play the selected card
+        function playCard() {
+            if (!selectedCard) return;
+
+            console.log("Player with id plays card", selectedCard);
+            fetch('/play_card', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({card: selectedCard, id: playerId})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    renderHand(data.newHand); // Update hand without the played card
+                    fetchPlayedCards(); // Fetch and display played cards
+                } else {
+                    alert(data.error || "Failed to play card.");
+                }
+            })
+            .catch(err => console.error("Error playing card:", err));
+
+            fetchPlayedCards();
+        }
+
+        // Fetch played cards from the server
+        function fetchPlayedCards() {
+            fetch('/get_played_cards')
+                .then(response => response.json())
+                .then(data => {
+                    playedCardsDiv.innerText = data.playedCards.join(", ");
+                })
+                .catch(err => console.error("Error fetching played cards:", err));
+        }
+
         // Reset the game and deal a new hand
         function newHand() {
             fetch('/reset_belot', { method: 'POST' })
                 .then(() => {
-                    fetchInitialHand(); // Deal a new hand after resetting
-                    getMoreButton.disabled = false; // Re-enable the "Get More Cards" button
+                    fetchInitialHand();
+                    document.getElementById('get-more-cards').disabled = false;
                 })
                 .catch(err => console.error("Error resetting deck:", err));
         }
 
         // End the game
         function endGame() {
-            window.location.href = '/host_player.html'
             fetch('/end_belot', { method: 'POST' })
+                .then(() => window.location.href = '/host_player.html')
                 .catch(err => console.error("Error ending the game:", err));
         }
-        setInterval(() => {
-            fetch('/belot_off')
-                .then(response => response.json())
-                .then(belot_on => {
-                    if (!belot_on) {
-                        window.location.href = '/player.html';
-                    }
-                })
-                .catch(err => console.error("Error checking redirect:", err));
-        }, 2000);
 
-        // Fetch the initial hand on page load
+        // Fetch initial hand on page load
         fetchInitialHand();
+
+        // Periodically fetch played cards
+        //setInterval(fetchPlayedCards, 2000);
     </script>
 </body>
 </html>

@@ -24,6 +24,7 @@
             .then(response => response.json())
             .then(data => {
                 localStorage.setItem('playerId', data.id);
+                playerId = data.id;
                 console.log(`Registered as Player ${data.id}`);
             })
             .catch(err => console.error("Error registering player:", err));
@@ -57,7 +58,7 @@
                 .then(response => response.json())
                 .then(belot_on => {
                     if (belot_on) {
-                        window.location.href = '/belot.html';
+                        window.location.href = `/belot.html`;
                     }
                 })
                 .catch(err => console.error("Error checking redirect:", err));

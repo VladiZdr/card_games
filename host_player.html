@@ -18,6 +18,7 @@
     <button onclick="window.location.href='/choose_cards.html'">Choose Cards</button>
 
     <script>
+        let playerId = 1
         // Register the host with the server
         fetch('/register_host', {
             method: 'POST',
@@ -63,7 +64,7 @@
                 .then(response => response.json())  // Parse JSON response
                 .then(data => {
                     if (data.belot_on) {
-                        window.location.href = '/belot.html';
+                        window.location.href = `/belot.html`;
                     } else {
                         alert(data.message || "Game cannot start. Check players.");
                     }
