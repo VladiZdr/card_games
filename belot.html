@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Belot</title>
+</head>
+<body>
+    <h1>Your Hand</h1>
+    <div id="hand"></div>
+    <button id="get-more-cards" onclick="getMoreCards()">Get 3 More Cards</button>
+    <button id="new-hand" onclick="newHand()">New Hand</button>
+    <button onclick="endGame()">End Game</button>
+
+    <script>
+        const playerId = localStorage.getItem('playerId');
+        const handDiv = document.getElementById('hand');
+        const getMoreButton = document.getElementById('get-more-cards');
+
+        // Fetch the initial 5-card hand
+        function fetchInitialHand() {
+            fetch(`/get_belot_hand1?id=${playerId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.hand) {
+                        handDiv.innerText = `Your hand: ${data.hand.join(", ")}`;
+                    } else if (data.error) {
+                        handDiv.innerText = data.error;
+                    }
+                })
+                .catch(err => console.error("Error fetching initial hand:", err));
+        }
+
+        // Fetch 3 additional cards
+        function getMoreCards() {
+            fetch(`/get_belot_hand2?id=${playerId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.hand) {
+                        handDiv.innerText = `Your hand: ${data.hand.join(", ")}`;
+                        getMoreButton.disabled = true; // Disable button after fetching 3 cards
+                    } else if (data.error) {
+                        handDiv.innerText = data.error;
+                    }
+                })
+                .catch(err => console.error("Error fetching additional cards:", err));
+        }
+
+        // Reset the game and deal a new hand
+        function newHand() {
+            fetch('/reset_belot', { method: 'POST' })
+                .then(() => {
+                    fetchInitialHand(); // Deal a new hand after resetting
+                    getMoreButton.disabled = false; // Re-enable the "Get More Cards" button
+                })
+                .catch(err => console.error("Error resetting deck:", err));
+        }
+
+        // End the game
+        function endGame() {
+            window.location.href = '/host_player.html'
+            fetch('/end_belot', { method: 'POST' })
+                .catch(err => console.error("Error ending the game:", err));
+        }
+        setInterval(() => {
+            fetch('/belot_off')
+                .then(response => response.json())
+                .then(belot_on => {
+                    if (!belot_on) {
+                        window.location.href = '/player.html';
+                    }
+                })
+                .catch(err => console.error("Error checking redirect:", err));
+        }, 2000);
+
+        // Fetch the initial hand on page load
+        fetchInitialHand();
+    </script>
+</body>
+</html>

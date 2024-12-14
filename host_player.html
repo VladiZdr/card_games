@@ -12,7 +12,7 @@
     <p>Selected Cards:</p>
     <div id="selectedCards"></div>
 
-    <button onclick="selectGame('belot')">Belot</button>
+    <button onclick="startBelot()">Belot</button>
     <button onclick="selectGame('texas_holdem')">Texas Holdem</button>
     <button onclick="startGame()">Start Game</button>
     <button onclick="window.location.href='/choose_cards.html'">Choose Cards</button>
@@ -46,18 +46,30 @@
             })
             .catch(err => console.error("Error fetching selected cards:", err));
 
-            function startGame() {
-                fetch('/start_game', { method: 'POST' })
-                    .then(response => response.json())  // Parse JSON response
-                    .then(data => {
-                        if (data.game_on) {
-                            window.location.href = '/game.html';
-                        } else {
-                            alert(data.message || "Game cannot start. Check selected cards or players.");
-                        }
-                    })
-                    .catch(err => console.error("Error starting the game:", err));
-            }
+        function startGame() {
+            fetch('/start_game', { method: 'POST' })
+                .then(response => response.json())  // Parse JSON response
+                .then(data => {
+                    if (data.game_on) {
+                        window.location.href = '/game.html';
+                    } else {
+                        alert(data.message || "Game cannot start. Check selected cards or players.");
+                    }
+                })
+                .catch(err => console.error("Error starting the game:", err));
+        }
+        function startBelot() {
+            fetch('/start_belot', { method: 'POST' })
+                .then(response => response.json())  // Parse JSON response
+                .then(data => {
+                    if (data.belot_on) {
+                        window.location.href = '/belot.html';
+                    } else {
+                        alert(data.message || "Game cannot start. Check players.");
+                    }
+                })
+                .catch(err => console.error("Error starting the game:", err));
+        }
 
 
     </script>

@@ -52,6 +52,16 @@
                 })
                 .catch(err => console.error("Error checking redirect:", err));
         }, 5000);
+        setInterval(() => {
+            fetch('/belot_on')
+                .then(response => response.json())
+                .then(belot_on => {
+                    if (belot_on) {
+                        window.location.href = '/belot.html';
+                    }
+                })
+                .catch(err => console.error("Error checking redirect:", err));
+        }, 3000);
 
     </script>
 </body>
