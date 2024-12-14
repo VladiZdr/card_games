@@ -5,14 +5,19 @@ import json
 from threading import Lock
 from urllib.parse import urlparse, parse_qs
 
-game_lock = Lock()
+# Players
 players = []
 host = None
 next_player_id = 2
+# controll game state
 game_type = None
-selected_cards = []
+game_lock = Lock()
 game_on = False
 belot_on = False
+# cards
+selected_cards = []
+player_hands = {}
+left_belot_deck = []
 left_cards = []
 full_deck = [
 "2 Spades", "3 Spades", "4 Spades", "5 Spades", "6 Spades", "7 Spades", "8 Spades", "9 Spades", "10 Spades", "J  Spades", "D Spades", "K Spades", "A Spades", 
@@ -27,18 +32,9 @@ belot_deck = [
     "7♠", "8♠", "9♠", "10♠", "J♠", "Q♠", "K♠", "A♠",
 ]
 
-# Player hands
-player_hands = {}
-left_belot_deck = [] 
-
 #directory = os.path.expanduser("~/Documents/Card_game")
 #os.chdir(directory)
-
-def reset_belot_deck():
-    global left_belot_deck
-    left_belot_deck = belot_deck.copy()
-    random.shuffle(left_belot_deck)
-
+    
 class GameServerHandler(SimpleHTTPRequestHandler):
     
     def do_POST(self):
@@ -111,7 +107,7 @@ class GameServerHandler(SimpleHTTPRequestHandler):
             self.respond("Game ended. Redirecting players...")
 
     def do_GET(self): 
-        global left_cards
+        global left_cards, left_belot_deck, player_hands
         
         if self.path == "/players":
             self.respond(json.dumps(players), content_type="application/json")
@@ -126,6 +122,7 @@ class GameServerHandler(SimpleHTTPRequestHandler):
                     self.send_response(500)
                     self.end_headers()
                     self.wfile.write(f"Error checking game status: {str(e)}".encode())
+
         elif self.path.startswith("/belot_on"):
             with game_lock:
                 try:
@@ -157,14 +154,16 @@ class GameServerHandler(SimpleHTTPRequestHandler):
             with game_lock:
                 # Reset deck if it's the first request or manually reset
                 if not left_belot_deck:
-                    reset_belot_deck()
+                    left_belot_deck = belot_deck.copy()
+                    random.shuffle(left_belot_deck)
+                    player_hands.clear()
                 
                 # Ensure each player gets a unique hand
                 if player_id not in player_hands:
                     if len(left_belot_deck) < 5:
                         self.respond(json.dumps({"error": "Not enough cards to deal"}), content_type="application/json")
                         return
-                    
+
                     player_hands[player_id] = [left_belot_deck.pop() for _ in range(5)]
 
             self.respond(json.dumps({"hand": player_hands[player_id]}), content_type="application/json")
@@ -188,10 +187,9 @@ class GameServerHandler(SimpleHTTPRequestHandler):
 
         # Endpoint to reset the deck and clear player hands
         elif self.path == "/reset_belot":
-            with game_lock:
-                reset_belot_deck()
-                player_hands.clear()
-
+            left_belot_deck = belot_deck.copy()
+            random.shuffle(left_belot_deck)
+            player_hands.clear()
             self.respond(json.dumps({"message": "Belot deck reset"}), content_type="application/json")
 
 
