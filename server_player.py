@@ -42,7 +42,11 @@ class GameServerHandler(SimpleHTTPRequestHandler):
     def do_POST(self):
         global players, host, next_player_id, game_type, selected_cards, game_on, belot_on, left_cards, belot_id
 
-        if self.path == "/register_host" and not players:
+        if self.path == "/register_host":
+            if players:
+                self.respond("Already registered")
+                return
+            
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length).decode()
             host_data = json.loads(post_data)
@@ -53,21 +57,13 @@ class GameServerHandler(SimpleHTTPRequestHandler):
             self.respond("Host registered successfully.")
 
         elif self.path == "/register_player":
-            # Extract the client's IP address from the connection
-            ip_address = self.client_address[0]
-
-            # Check if the IP is already registered
-            if any(player['ip'] == ip_address for player in players):
-                # Respond with the existing player's ID
-                existing_player = next(player for player in players if player['ip'] == ip_address)
-                self.respond(json.dumps({"id": existing_player["id"]}))
-            else:
-                # Register a new player
-                global next_player_id  
-                new_player = {"id": next_player_id, "ip": ip_address}
-                next_player_id += 1
-                players.append(new_player)
-                self.respond(json.dumps({"id": new_player["id"]}))
+            
+            # Register a new player
+            global next_player_id  
+            new_player = {"id": next_player_id}
+            next_player_id += 1
+            players.append(new_player)
+            self.respond(json.dumps({"id": new_player["id"]}))
 
 
         elif self.path == "/submit_cards":
@@ -125,18 +121,21 @@ class GameServerHandler(SimpleHTTPRequestHandler):
 
         elif self.path == "/reset_belot":
             with game_lock:
+                player_hands.clear()
                 played_cards.clear()
                 left_cards = belot_deck.copy()
-                for player in players:
-                    player["hand"] = []
             self.respond(json.dumps({"success": True}))
                     
         elif self.path == "/end_game":
             with game_lock:
+                players = []
+                next_player_id = 2
                 game_on = False
             self.respond("Game ended. Redirecting players...")
         elif self.path == "/end_belot":
             with game_lock:
+                players = []
+                next_player_id = 2
                 belot_on = False
             self.respond("Game ended. Redirecting players...")
 
@@ -245,7 +244,7 @@ class GameServerHandler(SimpleHTTPRequestHandler):
         elif self.path.startswith("/belot_off"):
             with game_lock:
                 try:
-                    self.respond(json.dumps(belot_on), content_type="application/json")
+                    self.respond(json.dumps({"belot_on":  belot_on}), content_type="application/json")
                 except Exception as e:
                     self.send_response(500)
                     self.end_headers()

@@ -11,11 +11,8 @@
     <div id="players"></div>
 
     <script>
-        let playerId;
-
-        // Register the player with the server
-        if (!localStorage.getItem('playerId')) {
-            // Register only if the player is not already registered
+        //register player
+        
             fetch('/register_player', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -23,15 +20,11 @@
             })
             .then(response => response.json())
             .then(data => {
-                localStorage.setItem('playerId', data.id);
-                playerId = data.id;
+                localStorage.setItem('playerId',data.id);
                 console.log(`Registered as Player ${data.id}`);
             })
             .catch(err => console.error("Error registering player:", err));
-        } else {
-            console.log(`Already registered as Player ${localStorage.getItem('playerId')}`);
-        }
-
+        
 
         //fetch the list of players
         fetch('/players')

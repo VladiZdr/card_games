@@ -34,7 +34,7 @@
 
 
     <script>
-        let playerId = 1;
+        
         let won_cards = [];
         
         const handDiv = document.getElementById('hand');
@@ -46,14 +46,14 @@
         fetch('/get_belot_id')
             .then(response => response.json())
             .then(data => {
-                playerId = data.id;
-                console.log("Player ID:", playerId);
+                localStorage.setItem('playerId', data.id);
+                console.log("Player ID:", localStorage.getItem('playerId'));
             })
             .catch(err => console.error("Error fetching belot_id:", err));
 
         // Fetch the initial 5-card hand
         function fetchInitialHand() {
-            fetch(`/get_belot_hand1?id=${playerId}`)
+            fetch(`/get_belot_hand1?id=${localStorage.getItem('playerId')}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.hand) {
@@ -67,7 +67,7 @@
 
         // Fetch 3 additional cards
         function getMoreCards() {
-            fetch(`/get_belot_hand2?id=${playerId}`)
+            fetch(`/get_belot_hand2?id=${localStorage.getItem('playerId')}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.hand) {
@@ -108,11 +108,11 @@
         function playCard() {
             if (!selectedCard) return;
 
-            console.log("Player with id plays card", selectedCard);
+            console.log("Player plays card", selectedCard);
             fetch('/play_card', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({card: selectedCard, id: playerId})
+                body: JSON.stringify({card: selectedCard, id: localStorage.getItem('playerId')})
             })
             .then(response => response.json())
             .then(data => {
@@ -141,7 +141,11 @@
         // Reset the game and deal a new hand
         function newHand() {
             fetch('/reset_belot', { method: 'POST' })
-                .then(() => {
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success){
+                        console.log("Deck reset");
+                    }
                     fetchInitialHand();
                     document.getElementById('get-more-cards').disabled = false;
                     won_cards = [];
@@ -169,11 +173,22 @@
                 .catch(err => console.error("Error ending the game:", err));
         }
 
+        function endGamePlayers(){
+            fetch('belot_off')
+            .then(response => response.json())
+            .then(data => {
+                if(!data.belot_on){
+                    window.location.href = '/player.html'
+                }
+            }).catch(err => console.error("Error ending the game for player:", err));
+        }
+
         // Fetch initial hand on page load
         fetchInitialHand();
 
         // Periodically fetch played cards
-        //setInterval(fetchPlayedCards, 2000);
+        setInterval(fetchPlayedCards, 2000);
+        setInterval(endGamePlayers, 3000);
     </script>
 </body>
 </html>
