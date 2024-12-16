@@ -63,7 +63,7 @@ class GameServerHandler(SimpleHTTPRequestHandler):
                 self.respond(json.dumps({"id": existing_player["id"]}))
             else:
                 # Register a new player
-                global next_player_id
+                global next_player_id  
                 new_player = {"id": next_player_id, "ip": ip_address}
                 next_player_id += 1
                 players.append(new_player)
@@ -228,6 +228,10 @@ class GameServerHandler(SimpleHTTPRequestHandler):
         # Get played cards
         elif self.path == "/get_played_cards":
             self.respond(json.dumps({"playedCards": played_cards}))
+        
+        elif self.path == "/won_hand":
+            self.respond(json.dumps({"wonCards": played_cards}))
+            played_cards.clear()
 
         # End games -> go back to menus
         elif self.path.startswith("/game_off"):

@@ -24,17 +24,23 @@
     <button id="play-card" onclick="playCard()" disabled>Play</button>
     <button id="get-more-cards" onclick="getMoreCards()">Get 3 More Cards</button>
     <button id="new-hand" onclick="newHand()">New Hand</button>
+    <button id="won-hand" onclick="wonHand()">I won this hand</button>
     <button onclick="endGame()">End Game</button>
 
     <h2>Played Cards</h2>
     <div id="played-cards"></div>
+    <h3>Won Cards</h3>
+    <div id="won-cards"></div>
+
 
     <script>
         let playerId = 1;
+        let won_cards = [];
         
         const handDiv = document.getElementById('hand');
         const playButton = document.getElementById('play-card');
         const playedCardsDiv = document.getElementById('played-cards');
+        const wonCardsDiv = document.getElementById('won-cards');
         let selectedCard = null;
 
         fetch('/get_belot_id')
@@ -138,8 +144,22 @@
                 .then(() => {
                     fetchInitialHand();
                     document.getElementById('get-more-cards').disabled = false;
+                    won_cards = [];
+                    wonCardsDiv.innerText = "";
+                    playedCardsDiv.innerText = "";
                 })
                 .catch(err => console.error("Error resetting deck:", err));
+        }
+
+        // Store the played cards as won by player
+        function wonHand(){
+            fetch('/won_hand')
+            .then(response => response.json())
+            .then(data => {
+                wonCardsDiv.innerText += (wonCardsDiv.innerText ? ", " : "") + data.wonCards.join(", ");
+                playedCardsDiv.innerText = "";
+            })
+            .catch(err => console.error("Error fetching won hand:", err));
         }
 
         // End the game
