@@ -40,7 +40,7 @@ belot_deck = [
 class GameServerHandler(SimpleHTTPRequestHandler):
     
     def do_POST(self):
-        global players, host, next_player_id, game_type, selected_cards, game_on, belot_on, left_cards, belot_id
+        global players, host, next_player_id, game_type, selected_cards, game_on, belot_on, left_cards, belot_id, left_belot_deck
 
         if self.path == "/register_host":
             if players:
@@ -87,7 +87,11 @@ class GameServerHandler(SimpleHTTPRequestHandler):
         elif self.path == "/start_belot":
             #if 4 == len(players):
                 with game_lock:
+                    belot_id = 0
+                    played_cards.clear()
+                    player_hands.clear()
                     belot_on = True  # Update belot_on safely
+                    left_belot_deck = belot_deck.copy()
                 self.respond(json.dumps({"belot_on": True}), content_type="application/json")
             #else:
                 #self.respond(json.dumps({"belot_on": False, "message": "Not enough players."}), content_type="application/json")
@@ -121,9 +125,7 @@ class GameServerHandler(SimpleHTTPRequestHandler):
 
         elif self.path == "/reset_belot":
             with game_lock:
-                player_hands.clear()
                 played_cards.clear()
-                left_cards = belot_deck.copy()
             self.respond(json.dumps({"success": True}))
                     
         elif self.path == "/end_game":
@@ -198,12 +200,17 @@ class GameServerHandler(SimpleHTTPRequestHandler):
                     player_hands.clear()
                 
                 # Ensure each player gets a unique hand
-                if player_id not in player_hands:
-                    if len(left_belot_deck) < 5:
-                        self.respond(json.dumps({"error": "Not enough cards to deal"}), content_type="application/json")
-                        return
+                if player_id in player_hands:
+                    # Clear the existing hand for the player
+                    player_hands[player_id].clear()
 
-                    player_hands[player_id] = [left_belot_deck.pop() for _ in range(5)]
+                # Check if there are enough cards to deal
+                if len(left_belot_deck) < 5:
+                    self.respond(json.dumps({"error": "Not enough cards to deal"}), content_type="application/json")
+                    return
+
+                # Deal 5 new cards to the player
+                player_hands[player_id] = [left_belot_deck.pop() for _ in range(5)]
 
             self.respond(json.dumps({"hand": player_hands[player_id]}), content_type="application/json")
 
