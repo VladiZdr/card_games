@@ -61,7 +61,8 @@
     <h2>Your Hand</h2>
     <div id="hand"></div>
     
-    <button id="play-card" onclick="playCard()" disabled>Play Cards</button>
+    <button id="play-card" onclick="playCards()" disabled>Play Cards</button>
+    <button id="call-liar" onclick="callLiar()">Call Liar</button>
     <button id="new-game" onclick="newGame()">New Game</button>
     <button id="shoot" onclick="shoot()">Shoot Yourself</button>
     <button id="end-game" onclick="endGame()">End Game</button>
@@ -73,14 +74,15 @@
         const handDiv = document.getElementById('hand');
         const playButton = document.getElementById('play-card');
         const playedCardsDiv = document.getElementById('played-cards');
-        let selectedCard = null;
-        localStorage.removeItem("curr_hand");
+        let selectedCards = [];
 
+        localStorage.removeItem("curr_hand");
 
         function newGame(){
             fetch("/liar_new_game")
             .catch(err => console.error("Error getting hand:", err));
         }
+
         function dealHand(){
             let currHand = localStorage.getItem("curr_hand");
 
@@ -94,13 +96,13 @@
             fetch("/liar_hand")
             .then(response => response.json())
             .then(data => {
-                localStorage.setItem("curr_hand", data.hand);
-                    if (data.hand) {
-                        renderHand(data.hand);
-                    } else if (data.error) {
-                        handDiv.innerText = data.error;
-                    }
-                })
+                localStorage.setItem("curr_hand", JSON.stringify(data.hand));
+                if (data.hand) {
+                    renderHand(data.hand);
+                } else if (data.error) {
+                    handDiv.innerText = data.error;
+                }
+            })
             .catch(err => console.error("Error getting hand:", err));
         }
 
@@ -111,13 +113,27 @@
         }
 
         function endGamePlayers(){
-            fetch('liar_off')
+            fetch('/liar_off')
             .then(response => response.json())
             .then(data => {
-                if(!data.liar_on){
-                    window.location.href = '/player.html'
+                if (!data.liar_on) {
+                    window.location.href = '/player.html';
                 }
             }).catch(err => console.error("Error ending the game for player:", err));
+        }
+
+        function selectCard(cardDiv, card) {
+            // Toggle card selection
+            if (selectedCards.includes(card)) {
+                selectedCards = selectedCards.filter(c => c !== card);
+                cardDiv.classList.remove('selected');
+            } else {
+                selectedCards.push(card);
+                cardDiv.classList.add('selected');
+            }
+
+            // Enable or disable play button based on selected cards
+            playButton.disabled = selectedCards.length === 0;
         }
 
         // Render the player's hand as selectable cards
@@ -130,12 +146,36 @@
                 cardDiv.onclick = () => selectCard(cardDiv, card);
                 handDiv.appendChild(cardDiv);
             });
-
-            selectedCard = null;
         }
-            
+
+        function playCards() {
+            if (selectedCards.length === 0) return;
+
+            // Clear previous played cards
+            playedCardsDiv.innerHTML = '';
+
+            // Display the selected cards under "Played Cards"
+            selectedCards.forEach(card => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'card';
+                cardDiv.innerText = card;
+                playedCardsDiv.appendChild(cardDiv);
+            });
+
+            // Remove the selected cards from the hand
+            const currHand = JSON.parse(localStorage.getItem("curr_hand"));
+            const updatedHand = currHand.filter(card => !selectedCards.includes(card));
+            localStorage.setItem("curr_hand", JSON.stringify(updatedHand));
+            renderHand(updatedHand);
+
+            // Clear selection and disable play button
+            selectedCards = [];
+            playButton.disabled = true;
+        }
+        
         setInterval(endGamePlayers, 3000);
         setInterval(dealHand, 2000);
     </script>
 </body>
 </html>
+

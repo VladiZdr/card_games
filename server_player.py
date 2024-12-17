@@ -104,8 +104,13 @@ class GameServerHandler(SimpleHTTPRequestHandler):
             with game_lock:
                 liar_on = True
                 num_players = len(players)
-                liar_deck.extend(["A♠"] * (num_players * 2))                       
-                liar_deck.extend(["2♣"] * (num_players * 3))
+                liar_deck.clear()
+                ascii_range = list(range(128, 229))  # ASCII values from 128 to 228 (Up to 20 players)
+                for i in range(num_players * 2):
+                    liar_deck.append(f"A{chr(ascii_range[i % len(ascii_range)])}")
+                for i in range(num_players * 3):
+                    liar_deck.append(f"2{chr(ascii_range[i % len(ascii_range)])}")
+
             self.respond(json.dumps({"liar_on": liar_on}), content_type="application/json")
 
 
@@ -210,7 +215,7 @@ class GameServerHandler(SimpleHTTPRequestHandler):
         elif self.path.startswith("/liar_new_game"):
             with game_lock:
                 liar_new_game = True
-                left_liar_deck = liar_deck
+                left_liar_deck = liar_deck.copy()
                 random.shuffle(left_liar_deck)
                 self.respond(json.dumps({"liar_new_game": liar_new_game}), content_type="application/json")
 
