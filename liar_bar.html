@@ -62,13 +62,48 @@
     <div id="hand"></div>
     
     <button id="play-card" onclick="playCard()" disabled>Play Cards</button>
-    <button id="call-liar" onclick="callLiar()">Call Liar</button>
+    <button id="new-game" onclick="newGame()">New Game</button>
+    <button id="shoot" onclick="shoot()">Shoot Yourself</button>
     <button id="end-game" onclick="endGame()">End Game</button>
 
     <h2>Played Cards</h2>
     <div id="played-cards"></div>
 
     <script>
+        const handDiv = document.getElementById('hand');
+        const playButton = document.getElementById('play-card');
+        const playedCardsDiv = document.getElementById('played-cards');
+        let selectedCard = null;
+        localStorage.removeItem("curr_hand");
+
+
+        function newGame(){
+            fetch("/liar_new_game")
+            .catch(err => console.error("Error getting hand:", err));
+        }
+        function dealHand(){
+            let currHand = localStorage.getItem("curr_hand");
+
+            if (currHand) { // Check if the key exists
+                currHand = JSON.parse(currHand); // Parse the JSON string to an array
+
+                if (currHand.length > 0) { // Check if the array is not empty
+                    return;
+                }
+            }
+            fetch("/liar_hand")
+            .then(response => response.json())
+            .then(data => {
+                localStorage.setItem("curr_hand", data.hand);
+                    if (data.hand) {
+                        renderHand(data.hand);
+                    } else if (data.error) {
+                        handDiv.innerText = data.error;
+                    }
+                })
+            .catch(err => console.error("Error getting hand:", err));
+        }
+
         function endGame() {
             fetch('/end_liar', { method: 'POST' })
                 .then(() => window.location.href = '/host_player.html')
@@ -84,7 +119,23 @@
                 }
             }).catch(err => console.error("Error ending the game for player:", err));
         }
+
+        // Render the player's hand as selectable cards
+        function renderHand(cards){
+            handDiv.innerHTML = '';
+            cards.forEach(card => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'card';
+                cardDiv.innerText = card;
+                cardDiv.onclick = () => selectCard(cardDiv, card);
+                handDiv.appendChild(cardDiv);
+            });
+
+            selectedCard = null;
+        }
+            
         setInterval(endGamePlayers, 3000);
+        setInterval(dealHand, 2000);
     </script>
 </body>
 </html>
