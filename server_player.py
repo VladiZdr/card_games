@@ -23,12 +23,6 @@ selected_cards = []
 player_hands = {}
 left_belot_deck = []
 left_cards = []
-full_deck = [
-"2 Spades", "3 Spades", "4 Spades", "5 Spades", "6 Spades", "7 Spades", "8 Spades", "9 Spades", "10 Spades", "J  Spades", "D Spades", "K Spades", "A Spades", 
-"2 Hearts", "3 Hearts", "4 Hearts", "5 Hearts", "6 Hearts", "7 Hearts", "8 Hearts", "9 Hearts", "10 Hearts", "J  Hearts", "D Hearts", "K Hearts", "A Hearts", 
-"2 Diamonds", "3 Diamonds", "4 Diamonds", "5 Diamonds", "6 Diamonds", "7 Diamonds", "8 Diamonds", "9 Diamonds", "10 Diamonds", "J  Diamonds", "D Diamonds", "K Diamonds", "A Diamonds", 
-"2 Clubs", "3 Clubs", "4 Clubs", "5 Clubs", "6 Clubs", "7 Clubs", "8 Clubs", "9 Clubs", "10 Clubs", "J  Clubs", "D Clubs", "K Clubs", "A Clubs"
-]
 belot_deck = [
     "7♣", "8♣", "9♣", "10♣", "J♣", "Q♣", "K♣", "A♣",
     "7♦", "8♦", "9♦", "10♦", "J♦", "Q♦", "K♦", "A♦",
