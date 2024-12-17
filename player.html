@@ -86,6 +86,16 @@
                 })
                 .catch(err => console.error("Error checking redirect:", err));
         }, 3000);
+        setInterval(() => {
+            fetch('/liar_on')
+                .then(response => response.json())
+                .then(liar_on => {
+                    if (liar_on) {
+                        window.location.href = `/liar_bar.html`;
+                    }
+                })
+                .catch(err => console.error("Error checking redirect:", err));
+        }, 4000);
 
     </script>
 </body>

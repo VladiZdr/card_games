@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liar's Bar</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        #hand, #played-cards {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .card {
+            display: inline-block;
+            padding: 15px;
+            margin: 5px;
+            border: 2px solid #555;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #f9f9f9;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .card:hover {
+            background-color: #ddd;
+            transform: scale(1.1);
+        }
+        .selected {
+            background-color: #ffeb3b;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>Liar's Bar</h1>
+    <h2>Your Hand</h2>
+    <div id="hand"></div>
+    
+    <button id="play-card" onclick="playCard()" disabled>Play Cards</button>
+    <button id="call-liar" onclick="callLiar()">Call Liar</button>
+    <button id="end-game" onclick="endGame()">End Game</button>
+
+    <h2>Played Cards</h2>
+    <div id="played-cards"></div>
+
+    <script>
+        function endGame() {
+            fetch('/end_liar', { method: 'POST' })
+                .then(() => window.location.href = '/host_player.html')
+                .catch(err => console.error("Error ending the game:", err));
+        }
+
+        function endGamePlayers(){
+            fetch('liar_off')
+            .then(response => response.json())
+            .then(data => {
+                if(!data.liar_on){
+                    window.location.href = '/player.html'
+                }
+            }).catch(err => console.error("Error ending the game for player:", err));
+        }
+    </script>
+</body>
+</html>

@@ -78,10 +78,10 @@
     <div id="selectedCards">None</div>
 
     <div id="controls">
-        <button onclick="startBelot()">Belot</button>
-        <button onclick="selectGame('texas_holdem')">Texas Holdem</button>
         <button onclick="startGame()">Start Game</button>
         <button onclick="window.location.href='/choose_cards.html'">Choose Cards</button>
+        <button onclick="startBelot()">Belot</button>
+        <button onclick="startLiar()">Liar's bar</button>
     </div>
 
     <script>
@@ -136,9 +136,21 @@
                         alert(data.message || "Game cannot start. Check players.");
                     }
                 })
-                .catch(err => console.error("Error starting the game:", err));
+                .catch(err => console.error("Error starting belot:", err));
         }
 
+        function startLiar(){
+            fetch('start_liar', { method: 'POST' })
+                .then(response => response.json())  // Parse JSON response
+                .then(data => {
+                    if (data.liar_on) {
+                        window.location.href = `/liar_bar.html`;
+                    } else {
+                        alert(data.message || "Game cannot start. Check players.");
+                    }
+                })
+                .catch(err => console.error("Error starting liar:", err));
+        }
 
     </script>
 </body>

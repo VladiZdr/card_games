@@ -15,6 +15,7 @@ game_type = None
 game_lock = Lock()
 game_on = False
 belot_on = False
+liar_on = False
 # cards
 played_cards = []
 selected_cards = []
@@ -33,6 +34,7 @@ belot_deck = [
     "7♥", "8♥", "9♥", "10♥", "J♥", "Q♥", "K♥", "A♥",
     "7♠", "8♠", "9♠", "10♠", "J♠", "Q♠", "K♠", "A♠",
 ]
+liar_deck = []
 
 #directory = os.path.expanduser("~/Documents/Card_game")
 #os.chdir(directory)
@@ -40,7 +42,7 @@ belot_deck = [
 class GameServerHandler(SimpleHTTPRequestHandler):
     
     def do_POST(self):
-        global players, host, next_player_id, game_type, selected_cards, game_on, belot_on, left_cards, belot_id, left_belot_deck
+        global players, host, next_player_id, game_type, selected_cards, game_on, belot_on, left_cards, belot_id, left_belot_deck, liar_on, liar_deck
 
         if self.path == "/register_host":
             if players:
@@ -93,9 +95,14 @@ class GameServerHandler(SimpleHTTPRequestHandler):
                     belot_on = True  # Update belot_on safely
                     left_belot_deck = belot_deck.copy()
                     random.shuffle(left_belot_deck)
-                self.respond(json.dumps({"belot_on": True}), content_type="application/json")
-            #else:
-                #self.respond(json.dumps({"belot_on": False, "message": "Not enough players."}), content_type="application/json")
+                self.respond(json.dumps({"belot_on": belot_on}), content_type="application/json")
+            
+
+        elif self.path.startswith("/start_liar"):
+            with game_lock:
+                liar_on = True
+            self.respond(json.dumps({"liar_on": liar_on}), content_type="application/json")
+
 
         # Play a card
         elif self.path.startswith("/play_card"):
@@ -141,9 +148,15 @@ class GameServerHandler(SimpleHTTPRequestHandler):
                 next_player_id = 2
                 belot_on = False
             self.respond("Game ended. Redirecting players...")
+        elif self.path == "/end_liar":
+            with game_lock:
+                players = []
+                next_player_id = 2
+                liar_on = False
+            self.respond("Game ended. Redirecting players...")
 
     def do_GET(self): 
-        global left_cards, left_belot_deck, player_hands, played_cards, belot_id
+        global left_cards, left_belot_deck, player_hands, played_cards, belot_id, liar_deck, liar_on
         
         if self.path == "/players":
             self.respond(json.dumps(players), content_type="application/json")
@@ -177,7 +190,16 @@ class GameServerHandler(SimpleHTTPRequestHandler):
                 except Exception as e:
                     self.send_response(500)
                     self.end_headers()
-                    self.wfile.write(f"Error checking game status: {str(e)}".encode())            
+                    self.wfile.write(f"Error checking game status: {str(e)}".encode())
+
+        elif self.path.startswith("/liar_on"):
+            with game_lock:
+                try:
+                    self.respond(json.dumps(liar_on), content_type="application/json")
+                except Exception as e:
+                    self.send_response(500)
+                    self.end_headers()
+                    self.wfile.write(f"Error checking game status: {str(e)}".encode())              
         
         elif self.path.startswith("/get_belot_id"):
             with game_lock:
@@ -253,6 +275,15 @@ class GameServerHandler(SimpleHTTPRequestHandler):
             with game_lock:
                 try:
                     self.respond(json.dumps({"belot_on":  belot_on}), content_type="application/json")
+                except Exception as e:
+                    self.send_response(500)
+                    self.end_headers()
+                    self.wfile.write(f"Error checking game status: {str(e)}".encode())
+
+        elif self.path.startswith("/liar_off"):
+            with game_lock:
+                try:
+                    self.respond(json.dumps({"liar_on":  liar_on}), content_type="application/json")
                 except Exception as e:
                     self.send_response(500)
                     self.end_headers()
