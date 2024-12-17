@@ -4,18 +4,85 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Host</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 20px;
+            color: #444;
+        }
+
+        p {
+            font-size: 18px;
+            margin: 15px 0;
+        }
+
+        #players, #selectedCards {
+            margin: 20px auto;
+            padding: 10px;
+            max-width: 600px;
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        button {
+            margin: 10px 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+
+        button:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        #controls {
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+    </style>
 </head>
 <body>
     <h1>Host Page</h1>
     <p>Welcome, Player 1 (Host). You can see the connected players here:</p>
-    <div id="players"></div>
+    <div id="players">No players connected yet.</div>
+    
     <p>Selected Cards:</p>
-    <div id="selectedCards"></div>
+    <div id="selectedCards">None</div>
 
-    <button onclick="startBelot()">Belot</button>
-    <button onclick="selectGame('texas_holdem')">Texas Holdem</button>
-    <button onclick="startGame()">Start Game</button>
-    <button onclick="window.location.href='/choose_cards.html'">Choose Cards</button>
+    <div id="controls">
+        <button onclick="startBelot()">Belot</button>
+        <button onclick="selectGame('texas_holdem')">Texas Holdem</button>
+        <button onclick="startGame()">Start Game</button>
+        <button onclick="window.location.href='/choose_cards.html'">Choose Cards</button>
+    </div>
 
     <script>
         let playerId = 1

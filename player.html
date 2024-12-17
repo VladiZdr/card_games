@@ -4,11 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Player</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 20px;
+            color: #444;
+        }
+
+        p {
+            font-size: 18px;
+            margin: 15px 0;
+        }
+
+        #players {
+            margin: 20px auto;
+            padding: 10px;
+            max-width: 600px;
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            text-align: left;
+        }
+    </style>
 </head>
 <body>
     <h1>Player Page</h1>
     <p>Waiting for the game to start. Current players:</p>
-    <div id="players"></div>
+    <div id="players">No players connected yet.</div>
 
     <script>
         //register player

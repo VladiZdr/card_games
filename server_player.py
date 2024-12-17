@@ -92,6 +92,7 @@ class GameServerHandler(SimpleHTTPRequestHandler):
                     player_hands.clear()
                     belot_on = True  # Update belot_on safely
                     left_belot_deck = belot_deck.copy()
+                    random.shuffle(left_belot_deck)
                 self.respond(json.dumps({"belot_on": True}), content_type="application/json")
             #else:
                 #self.respond(json.dumps({"belot_on": False, "message": "Not enough players."}), content_type="application/json")
