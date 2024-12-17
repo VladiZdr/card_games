@@ -89,8 +89,8 @@
         setInterval(() => {
             fetch('/liar_on')
                 .then(response => response.json())
-                .then(liar_on => {
-                    if (liar_on) {
+                .then(data => {
+                    if (data.liar_on) {
                         window.location.href = `/liar_bar.html`;
                     }
                 })

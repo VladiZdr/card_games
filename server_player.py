@@ -98,7 +98,7 @@ class GameServerHandler(SimpleHTTPRequestHandler):
                 self.respond(json.dumps({"belot_on": belot_on}), content_type="application/json")
             
 
-        elif self.path.startswith("/start_liar"):
+        elif self.path == "/start_liar":
             with game_lock:
                 liar_on = True
             self.respond(json.dumps({"liar_on": liar_on}), content_type="application/json")
@@ -156,7 +156,7 @@ class GameServerHandler(SimpleHTTPRequestHandler):
             self.respond("Game ended. Redirecting players...")
 
     def do_GET(self): 
-        global left_cards, left_belot_deck, player_hands, played_cards, belot_id, liar_deck, liar_on
+        global left_cards, left_belot_deck, player_hands, played_cards, belot_id, liar_deck
         
         if self.path == "/players":
             self.respond(json.dumps(players), content_type="application/json")
@@ -195,7 +195,7 @@ class GameServerHandler(SimpleHTTPRequestHandler):
         elif self.path.startswith("/liar_on"):
             with game_lock:
                 try:
-                    self.respond(json.dumps(liar_on), content_type="application/json")
+                    self.respond(json.dumps({"liar_on": liar_on}), content_type="application/json")
                 except Exception as e:
                     self.send_response(500)
                     self.end_headers()
