@@ -148,6 +148,20 @@
             });
         }
 
+        
+        function shoot() {
+            // Generate a random number between 0 and 1
+            const randomChance = Math.random();
+            
+            // 1/4 probability to lose
+            if (randomChance < 0.25) {
+                alert("You lost!");
+            } else {
+                // 3/4 probability to survive
+                alert("You survived!");
+            }
+        }
+
         function playCards() {
             if (selectedCards.length === 0) return;
 
