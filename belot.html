@@ -159,6 +159,26 @@
         // Render the player's hand as selectable cards
         function renderHand(cards) {
             handDiv.innerHTML = '';
+
+            // Define suit and rank order
+            const suitOrder = { "♣": 1, "♦": 2, "♥": 3, "♠": 4 };
+            const rankOrder = { "7": 1, "8": 2, "9": 3, "10": 4, "J": 5, "Q": 6, "K": 7, "A": 8 };
+
+            // Sort the cards
+            cards.sort((a, b) => {
+                const suitA = suitOrder[a.slice(-1)];
+                const suitB = suitOrder[b.slice(-1)];
+                const rankA = rankOrder[a.slice(0, a.length - 1)];
+                const rankB = rankOrder[b.slice(0, b.length - 1)];
+
+                // Compare suits first, then ranks
+                if (suitA !== suitB) {
+                    return suitA - suitB;
+                }
+                return rankA - rankB;
+            });
+
+            // Render the sorted cards
             cards.forEach(card => {
                 const cardDiv = document.createElement('div');
                 cardDiv.className = 'card';
@@ -166,9 +186,11 @@
                 cardDiv.onclick = () => selectCard(cardDiv, card);
                 handDiv.appendChild(cardDiv);
             });
+
             selectedCard = null;
             playButton.disabled = true;
         }
+
 
         // Select a card from the hand
         function selectCard(cardElement, card) {
