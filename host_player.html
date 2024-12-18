@@ -133,7 +133,7 @@
                     if (data.belot_on) {
                         window.location.href = `/belot.html`;
                     } else {
-                        alert(data.message || "Game cannot start. Check players.");
+                        alert(data.message || "Game cannot start. Not enough players.");
                     }
                 })
                 .catch(err => console.error("Error starting belot:", err));

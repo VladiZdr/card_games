@@ -83,7 +83,7 @@ class GameServerHandler(SimpleHTTPRequestHandler):
                 self.respond(json.dumps({"game_on": False, "message": "Not enough cards selected for all players."}), content_type="application/json")
         
         elif self.path == "/start_belot":
-            #if 4 == len(players):
+            if 4 == len(players):
                 with game_lock:
                     belot_id = 0
                     played_cards.clear()
@@ -91,7 +91,7 @@ class GameServerHandler(SimpleHTTPRequestHandler):
                     belot_on = True  # Update belot_on safely
                     left_belot_deck = belot_deck.copy()
                     random.shuffle(left_belot_deck)
-                self.respond(json.dumps({"belot_on": belot_on}), content_type="application/json")
+            self.respond(json.dumps({"belot_on": belot_on}), content_type="application/json")
             
 
         elif self.path == "/start_liar":
