@@ -82,6 +82,7 @@
         <button onclick="window.location.href='/choose_cards.html'">Choose Cards</button>
         <button onclick="startBelot()">Belot</button>
         <button onclick="startLiar()">Liar's bar</button>
+        <button onclick="startDices()">Play Dices</button>
     </div>
 
     <script>
@@ -150,6 +151,20 @@
                     }
                 })
                 .catch(err => console.error("Error starting liar:", err));
+        }
+
+        function startDices(){
+            fetch('/start_dices', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if(data.dices_on){
+                    window.location.href = `/dices.html`;
+                }
+                else {
+                        alert(data.message || "Game cannot start. Check players.");
+                }
+            })
+            .catch(err => console.error("Error starting dices:", err));
         }
 
     </script>

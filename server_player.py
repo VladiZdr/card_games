@@ -11,12 +11,12 @@ host = None
 next_player_id = 2
 belot_id = 0
 # controll game state
-game_type = None
 game_lock = Lock()
 game_on = False
 belot_on = False
 liar_on = False
 liar_new_game = False
+dices_on = False
 # cards
 played_cards = []
 selected_cards = []
@@ -31,6 +31,9 @@ belot_deck = [
 ]
 liar_deck = []
 left_liar_deck = []
+possible_dices = [
+    "⚀",  "⚁",  "⚂",  "⚃",  "⚄", "⚅"   
+]
 
 #directory = os.path.expanduser("~/Documents/Card_game")
 #os.chdir(directory)
@@ -38,7 +41,9 @@ left_liar_deck = []
 class GameServerHandler(SimpleHTTPRequestHandler):
     
     def do_POST(self):
-        global players, host, next_player_id, game_type, selected_cards, game_on, belot_on, left_cards, belot_id, left_belot_deck, liar_on, liar_deck, left_liar_deck
+        global players, host, next_player_id, belot_id
+        global dices_on, game_on, belot_on, liar_on
+        global selected_cards, left_cards, left_belot_deck, liar_deck, left_liar_deck
 
         if self.path == "/register_host":
             if players:
@@ -55,7 +60,6 @@ class GameServerHandler(SimpleHTTPRequestHandler):
             self.respond("Host registered successfully.")
 
         elif self.path == "/register_player":
-            
             # Register a new player
             global next_player_id  
             new_player = {"id": next_player_id}
@@ -107,6 +111,10 @@ class GameServerHandler(SimpleHTTPRequestHandler):
 
             self.respond(json.dumps({"liar_on": liar_on}), content_type="application/json")
 
+        elif self.path == '/start_dices':
+            with game_lock:
+                dices_on = True
+            self.respond(json.dumps({"dices_on": dices_on}), content_type="application/json")
 
         # Play a card
         elif self.path.startswith("/play_card"):
@@ -159,6 +167,12 @@ class GameServerHandler(SimpleHTTPRequestHandler):
                 liar_on = False
                 left_liar_deck = []
             self.respond("Game ended. Redirecting players...")
+        elif self.path == "/end_dices":
+            with game_lock:
+                players = []
+                next_player_id = 2
+                dices_on = False
+            self.respond("Game ended. Redirecting players...")
 
     def do_GET(self): 
         global left_cards, left_belot_deck, player_hands, played_cards, belot_id, liar_deck, liar_new_game, left_liar_deck
@@ -205,6 +219,26 @@ class GameServerHandler(SimpleHTTPRequestHandler):
                     self.send_response(500)
                     self.end_headers()
                     self.wfile.write(f"Error checking game status: {str(e)}".encode())  
+
+        elif self.path.startswith("/dices_on"):
+            with game_lock:
+                try:
+                    self.respond(json.dumps({"dices_on": dices_on}), content_type="application/json")
+                except Exception as e:
+                    self.send_response(500)
+                    self.end_headers()
+                    self.wfile.write(f"Error checking game status: {str(e)}".encode())
+
+        elif self.path == "/get_dices":
+            try:
+                # Generate 5 random dice values
+                random_dices = random.choices(possible_dices, k=5)
+                # Respond with the dice values as JSON
+                self.respond(json.dumps({"dices": random_dices}), content_type="application/json")
+            except Exception as e:
+                self.send_response(500)
+                self.end_headers()
+                self.wfile.write(f"Error generating dices: {str(e)}".encode())
 
         elif self.path.startswith("/liar_new_game"):
             with game_lock:
@@ -304,6 +338,14 @@ class GameServerHandler(SimpleHTTPRequestHandler):
             with game_lock:
                 try:
                     self.respond(json.dumps({"liar_on":  liar_on}), content_type="application/json")
+                except Exception as e:
+                    self.send_response(500)
+                    self.end_headers()
+                    self.wfile.write(f"Error checking game status: {str(e)}".encode())
+        elif self.path.startswith("/dices_off"):
+            with game_lock:
+                try:
+                    self.respond(json.dumps({"dices_on":  dices_on}), content_type="application/json")
                 except Exception as e:
                     self.send_response(500)
                     self.end_headers()

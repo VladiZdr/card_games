@@ -85,7 +85,7 @@
                     }
                 })
                 .catch(err => console.error("Error checking redirect:", err));
-        }, 3000);
+        }, 2000);
         setInterval(() => {
             fetch('/liar_on')
                 .then(response => response.json())
@@ -95,7 +95,17 @@
                     }
                 })
                 .catch(err => console.error("Error checking redirect:", err));
-        }, 4000);
+        }, 3000);
+        setInterval(() => {
+            fetch('/dices_on')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.dices_on) {
+                        window.location.href = `/dices.html`;
+                    }
+                })
+                .catch(err => console.error("Error checking redirect:", err));
+        }, 7000);
 
     </script>
 </body>
